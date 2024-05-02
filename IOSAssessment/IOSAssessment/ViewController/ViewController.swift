@@ -19,13 +19,25 @@ class ViewController: UIViewController {
     
     fileprivate let minimumInterItemSpacing = 4.0
     fileprivate let minimumLineSpacing = 8.0
-    
+    fileprivate let viewModel = ViewControllerViewModel()
+    fileprivate var listOfImages: [ImageModel] = []
 
     // MARK: -
     // MARK: - ViewController Life Cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setup()
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.getImagesFromServer() { [weak self] images in
+            guard let self else { return }
+            listOfImages = images
+            DispatchQueue.main.async {
+                self.imageCollectionView.reloadData()
+            }
+        }
     }
 
     // MARK: -
@@ -50,12 +62,14 @@ class ViewController: UIViewController {
 extension ViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 100
+        return listOfImages.count
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "ImageCollectionViewCell", for: indexPath) as? ImageCollectionViewCell else { return UICollectionViewCell() }
-        cell.configureCell(image: UIImage(named: "sample") ?? UIImage())
+        let thumbnail = listOfImages[indexPath.item].thumbnail
+        let imageUrl = thumbnail.domain + "/" + thumbnail.basePath + "/0/" + thumbnail.key
+        cell.configureCell(imageUrl: imageUrl)
         return cell
     }
     
